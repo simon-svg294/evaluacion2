@@ -18,12 +18,19 @@ public class GestorSolicitudes {
     public void registrarSolicitud(Solicitud solicitud) {
         if (solicitud == null) {
             throw new IllegalArgumentException("La solicitud no puede ser nula");
+        } else if (solicitud.getDescripcion() == null
+                || solicitud.getDescripcion().isBlank()) {
+            throw new IllegalArgumentException("La descripción es obligatoria");
+        } else if (solicitud.getEstado() != Solicitud.Estado.PENDIENTE) {
+            throw new IllegalArgumentException(
+                    "Solo se pueden registrar solicitudes pendientes");
+        } else {
+            solicitudes.add(solicitud);
+            colaSolicitudes.offer(solicitud);
+            pilaSolicitudes.push(solicitud);
+            historialOperaciones.push(
+                    "Solicitud registrada: " + solicitud.getDescripcion());
         }
-
-        solicitudes.add(solicitud);
-        colaSolicitudes.offer(solicitud);
-        pilaSolicitudes.push(solicitud);
-        historialOperaciones.push("Solicitud registrada");
     }
 
     public Optional<Solicitud> procesarSiguienteSolicitud() {
@@ -32,8 +39,59 @@ public class GestorSolicitudes {
             return Optional.empty();
         }
 
-        historialOperaciones.push("Solicitud procesada");
+        switch (solicitud.getEstado()) {
+            case PENDIENTE -> {
+                solicitud.setEstado(Solicitud.Estado.PROCESADA);
+                historialOperaciones.push(
+                        "Solicitud procesada: " + solicitud.getDescripcion());
+            }
+            case PROCESADA -> historialOperaciones.push(
+                    "Solicitud omitida porque ya estaba procesada: "
+                            + solicitud.getDescripcion());
+            case RECHAZADA -> historialOperaciones.push(
+                    "Solicitud omitida porque fue rechazada: "
+                            + solicitud.getDescripcion());
+        }
         return Optional.of(solicitud);
+    }
+
+    public int procesarTodasLasSolicitudes() {
+        int procesadas = 0;
+        while (!colaSolicitudes.isEmpty()) {
+            if (colaSolicitudes.peek().getEstado() == Solicitud.Estado.PENDIENTE) {
+                procesadas++;
+            }
+            procesarSiguienteSolicitud();
+        }
+        return procesadas;
+    }
+
+    public int contarSolicitudesPorEstado(Solicitud.Estado estado) {
+        if (estado == null) {
+            throw new IllegalArgumentException("El estado no puede ser nulo");
+        }
+
+        int cantidad = 0;
+        for (Solicitud solicitud : solicitudes) {
+            switch (solicitud.getEstado()) {
+                case PENDIENTE -> {
+                    if (estado == Solicitud.Estado.PENDIENTE) {
+                        cantidad++;
+                    }
+                }
+                case PROCESADA -> {
+                    if (estado == Solicitud.Estado.PROCESADA) {
+                        cantidad++;
+                    }
+                }
+                case RECHAZADA -> {
+                    if (estado == Solicitud.Estado.RECHAZADA) {
+                        cantidad++;
+                    }
+                }
+            }
+        }
+        return cantidad;
     }
 
     public Optional<Solicitud> obtenerSolicitudMasReciente() {
