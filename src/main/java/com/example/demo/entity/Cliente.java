@@ -5,7 +5,7 @@ import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("CLIENTE")
-class Cliente extends Usuario {
+public class Cliente extends Usuario {
 
     private Integer puntosFidelidad = 0;
 

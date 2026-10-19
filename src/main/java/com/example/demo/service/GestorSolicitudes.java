@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import com.example.demo.entity.Solicitud;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Stack;
 
+@Service
 public class GestorSolicitudes {
 
     private final ArrayList<Solicitud> solicitudes = new ArrayList<>();
