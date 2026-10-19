@@ -1,9 +1,14 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.Solicitud;
+import com.example.demo.entity.Cliente;
+import com.example.demo.entity.Usuario;
+import com.example.demo.repository.SolicitudRepository;
+import com.example.demo.repository.UsuarioRepository;
 import com.example.demo.service.GestorSolicitudes;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,22 +23,48 @@ import java.util.Map;
 public class SolicitudController {
 
     private final GestorSolicitudes gestorSolicitudes;
+    private final SolicitudRepository solicitudRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    public SolicitudController(GestorSolicitudes gestorSolicitudes) {
+    public SolicitudController(GestorSolicitudes gestorSolicitudes,
+                               SolicitudRepository solicitudRepository,
+                               UsuarioRepository usuarioRepository) {
         this.gestorSolicitudes = gestorSolicitudes;
+        this.solicitudRepository = solicitudRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     @GetMapping
     public List<Solicitud> listar() {
-        return gestorSolicitudes.getSolicitudes();
+        return solicitudRepository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Solicitud buscarPorId(@PathVariable Long id) {
+        return solicitudRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existe una solicitud con ese id"));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Solicitud registrar(@Valid @RequestBody SolicitudRequest request) {
+        Usuario usuario = usuarioRepository.findById(request.clienteId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "No existe un cliente con ese id"));
+        if (!(usuario instanceof Cliente cliente)) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "No existe un cliente con ese id");
+        }
+
         Solicitud solicitud = new Solicitud(request.descripcion());
-        gestorSolicitudes.registrarSolicitud(solicitud);
-        return solicitud;
+        solicitud.setCliente(cliente);
+        Solicitud guardada = solicitudRepository.save(solicitud);
+        gestorSolicitudes.registrarSolicitud(guardada);
+        return guardada;
     }
 
     @GetMapping("/cola")
@@ -50,14 +81,16 @@ public class SolicitudController {
 
     @PostMapping("/procesar")
     public Solicitud procesarSiguiente() {
-        return gestorSolicitudes.procesarSiguienteSolicitud()
+        Solicitud solicitud = gestorSolicitudes.procesarSiguienteSolicitud()
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NO_CONTENT, "No hay solicitudes pendientes"));
+        return solicitudRepository.save(solicitud);
     }
 
     @PostMapping("/procesar-todas")
     public Map<String, Integer> procesarTodas() {
         int procesadas = gestorSolicitudes.procesarTodasLasSolicitudes();
+        solicitudRepository.saveAll(gestorSolicitudes.getSolicitudes());
         return Map.of("procesadas", procesadas);
     }
 
@@ -69,6 +102,8 @@ public class SolicitudController {
         return historial;
     }
 
-    public record SolicitudRequest(@NotBlank String descripcion) {
+    public record SolicitudRequest(
+            @NotBlank String descripcion,
+            @NotNull Long clienteId) {
     }
 }
