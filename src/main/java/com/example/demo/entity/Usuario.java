@@ -1,15 +1,29 @@
-package com.example.demo.model;
+package com.example.demo.entity;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_usuario")
 public abstract class Usuario {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
+
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "El correo no tiene un formato válido")
     private String correo;
 
     public Usuario() {
     }
 
-    public Usuario(Long id, String nombre, String correo) {
-        this.id = id;
+    public Usuario(String nombre, String correo) {
         this.nombre = nombre;
         this.correo = correo;
     }
@@ -40,4 +54,3 @@ public abstract class Usuario {
 
     public abstract String obtenerDescripcion();
 }
-
