@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Stack;
@@ -33,6 +35,27 @@ public class GestorSolicitudes {
             historialOperaciones.push(
                     "Solicitud registrada: " + solicitud.getDescripcion());
         }
+    }
+
+    public int validarCargaInicial(List<Solicitud> solicitudesIniciales) {
+        if (solicitudesIniciales == null) {
+            throw new IllegalArgumentException(
+                    "La lista de solicitudes iniciales no puede ser nula");
+        }
+
+        int descartadas = 0;
+        for (int i = 0; i < solicitudesIniciales.size(); i++) {
+            Solicitud solicitud = solicitudesIniciales.get(i);
+            if (solicitud != null
+                    && solicitud.getDescripcion() != null
+                    && !solicitud.getDescripcion().isBlank()
+                    && solicitud.getEstado() == Solicitud.Estado.PENDIENTE) {
+                registrarSolicitud(solicitud);
+            } else {
+                descartadas++;
+            }
+        }
+        return descartadas;
     }
 
     public Optional<Solicitud> procesarSiguienteSolicitud() {
@@ -94,6 +117,41 @@ public class GestorSolicitudes {
             }
         }
         return cantidad;
+    }
+
+    public List<Solicitud> buscarPorDescripcion(String texto) {
+        if (texto == null || texto.isBlank()) {
+            throw new IllegalArgumentException(
+                    "El texto de búsqueda no puede estar vacío");
+        }
+
+        List<Solicitud> resultados = new ArrayList<>();
+        String textoBuscado = texto.toLowerCase(Locale.ROOT);
+        for (Solicitud solicitud : solicitudes) {
+            String descripcion = solicitud.getDescripcion();
+            if (descripcion != null
+                    && descripcion.toLowerCase(Locale.ROOT).contains(textoBuscado)) {
+                resultados.add(solicitud);
+            }
+        }
+        return resultados;
+    }
+
+    public List<Solicitud> ordenarPorDescripcion() {
+        List<Solicitud> ordenadas = new ArrayList<>(solicitudes);
+        // Bubble sort compares adjacent descriptions and swaps them when out of order.
+        for (int fin = ordenadas.size() - 1; fin > 0; fin--) {
+            for (int i = 0; i < fin; i++) {
+                String actual = ordenadas.get(i).getDescripcion();
+                String siguiente = ordenadas.get(i + 1).getDescripcion();
+                if (actual.compareToIgnoreCase(siguiente) > 0) {
+                    Solicitud temporal = ordenadas.get(i);
+                    ordenadas.set(i, ordenadas.get(i + 1));
+                    ordenadas.set(i + 1, temporal);
+                }
+            }
+        }
+        return ordenadas;
     }
 
     public Optional<Solicitud> obtenerSolicitudMasReciente() {

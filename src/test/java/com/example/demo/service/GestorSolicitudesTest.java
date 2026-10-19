@@ -3,6 +3,9 @@ package com.example.demo.service;
 import com.example.demo.entity.Solicitud;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,5 +45,67 @@ class GestorSolicitudesTest {
         assertThrows(IllegalArgumentException.class,
                 () -> gestor.registrarSolicitud(procesada));
         assertEquals(0, gestor.getSolicitudes().size());
+    }
+
+    @Test
+    void cargaSoloSolicitudesValidasYCuentaLasDescartadas() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud valida = new Solicitud("Solicitud pendiente");
+        Solicitud sinDescripcion = new Solicitud(" ");
+        Solicitud procesada = new Solicitud("Solicitud ya procesada");
+        procesada.setEstado(Solicitud.Estado.PROCESADA);
+
+        int descartadas = gestor.validarCargaInicial(
+                Arrays.asList(valida, sinDescripcion, null, procesada));
+
+        assertEquals(3, descartadas);
+        assertEquals(List.of(valida), gestor.getSolicitudes());
+        assertEquals(List.of(valida), List.copyOf(gestor.getColaSolicitudes()));
+        assertEquals(List.of(valida), gestor.getPilaSolicitudes());
+    }
+
+    @Test
+    void buscaPorDescripcionSinDistinguirMayusculas() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud encontrada = new Solicitud("Solicitar SOPORTE");
+        gestor.registrarSolicitud(encontrada);
+        gestor.registrarSolicitud(new Solicitud("Actualizar datos"));
+
+        assertEquals(List.of(encontrada), gestor.buscarPorDescripcion("soporte"));
+        assertThrows(IllegalArgumentException.class,
+                () -> gestor.buscarPorDescripcion(" "));
+    }
+
+    @Test
+    void ordenaPorDescripcionSinCambiarLaListaOriginal() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud zeta = new Solicitud("Zeta");
+        Solicitud alfa = new Solicitud("Alfa");
+        gestor.registrarSolicitud(zeta);
+        gestor.registrarSolicitud(alfa);
+
+        assertEquals(List.of(alfa, zeta), gestor.ordenarPorDescripcion());
+        assertEquals(List.of(zeta, alfa), gestor.getSolicitudes());
+    }
+
+    @Test
+    void ordenarPorDescripcionDevuelveListaVaciaCuandoNoHaySolicitudes() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+
+        assertEquals(List.of(), gestor.ordenarPorDescripcion());
+    }
+
+    @Test
+    void ordenarPorDescripcionNoModificaElOrdenDeLaCola() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud zeta = new Solicitud("Zeta");
+        Solicitud alfa = new Solicitud("Alfa");
+        gestor.registrarSolicitud(zeta);
+        gestor.registrarSolicitud(alfa);
+
+        gestor.ordenarPorDescripcion();
+
+        assertEquals(List.of(zeta, alfa), List.copyOf(gestor.getColaSolicitudes()));
+        assertEquals(List.of(zeta, alfa), gestor.getPilaSolicitudes());
     }
 }

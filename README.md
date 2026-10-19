@@ -30,6 +30,7 @@ La ruta principal es `/api/usuarios`.
 | Método | Ruta | Uso |
 | --- | --- | --- |
 | GET | `/api/usuarios` | Ver todos los usuarios |
+| GET | `/api/usuarios/buscar?nombre=ana` | Buscar por nombre |
 | GET | `/api/usuarios/{id}` | Buscar un usuario |
 | POST | `/api/usuarios` | Crear un usuario |
 | PUT | `/api/usuarios/{id}` | Actualizar un usuario |
@@ -53,6 +54,8 @@ Un empleado necesita `cargo` y `salario`. Un cliente puede enviar
 correo ni cambiar el tipo de usuario al actualizar.
 
 Los usuarios se guardan en la base de datos.
+Las listas se pueden paginar con `page` y `size`, y ordenar con `sort`.
+Por ejemplo, `/api/usuarios?page=0&size=10&sort=nombre,asc`.
 
 ## Solicitudes
 
@@ -85,6 +88,12 @@ pilas del gestor siguen en memoria para administrar las solicitudes mientras
 la aplicación está activa. Al iniciar, las solicitudes pendientes se cargan
 desde la base de datos a la cola. El historial de operaciones sí está solo en
 memoria y se borra al reiniciar el proyecto.
+La lista de solicitudes también acepta `page` y `size`, por ejemplo:
+`/api/solicitudes?page=0&size=10`.
+
+En `GestorSolicitudes`, `buscarPorDescripcion` busca texto dentro de las
+descripciones y `ordenarPorDescripcion` devuelve una copia de la lista ordenada
+alfabéticamente.
 
 ## Pruebas
 

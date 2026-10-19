@@ -9,6 +9,10 @@ import com.example.demo.service.GestorSolicitudes;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,8 +39,10 @@ public class SolicitudController {
     }
 
     @GetMapping
-    public List<Solicitud> listar() {
-        return solicitudRepository.findAll();
+    public Page<Solicitud> listar(
+            @PageableDefault(size = 10, sort = "descripcion",
+                    direction = Sort.Direction.ASC) Pageable pageable) {
+        return solicitudRepository.findAll(pageable);
     }
 
     @GetMapping("/{id}")

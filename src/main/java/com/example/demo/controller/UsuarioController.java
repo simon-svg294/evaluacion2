@@ -4,11 +4,13 @@ import com.example.demo.dto.UsuarioRequest;
 import com.example.demo.entity.Usuario;
 import com.example.demo.repository.UsuarioRepository;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -21,8 +23,18 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<Usuario> listar() {
-        return usuarioRepository.findAll();
+    public Page<Usuario> listar(
+            @PageableDefault(size = 10, sort = "nombre",
+                    direction = Sort.Direction.ASC) Pageable pageable) {
+        return usuarioRepository.findAll(pageable);
+    }
+
+    @GetMapping("/buscar")
+    public Page<Usuario> buscarPorNombre(
+            @RequestParam String nombre,
+            @PageableDefault(size = 10, sort = "nombre",
+                    direction = Sort.Direction.ASC) Pageable pageable) {
+        return usuarioRepository.findByNombreContainingIgnoreCase(nombre, pageable);
     }
 
     @GetMapping("/{id}")
