@@ -15,7 +15,7 @@ import java.util.Stack;
 public class GestorSolicitudes {
 
     private final ArrayList<Solicitud> solicitudes = new ArrayList<>();
-    private final Queue<Solicitud> colaSolicitudes = new LinkedList<>();
+    private final LinkedList<Solicitud> colaSolicitudes = new LinkedList<>();
     private final Stack<Solicitud> pilaSolicitudes = new Stack<>();
     private final Stack<String> historialOperaciones = new Stack<>();
 
@@ -80,6 +80,13 @@ public class GestorSolicitudes {
         return Optional.of(solicitud);
     }
 
+    public void restaurarSolicitudPendienteAlFrente(Solicitud solicitud) {
+        solicitud.setEstado(Solicitud.Estado.PENDIENTE);
+        colaSolicitudes.addFirst(solicitud);
+        historialOperaciones.push(
+                "Solicitud devuelta a la cola: " + solicitud.getDescripcion());
+    }
+
     public int procesarTodasLasSolicitudes() {
         int procesadas = 0;
         while (!colaSolicitudes.isEmpty()) {
@@ -142,8 +149,8 @@ public class GestorSolicitudes {
         // Bubble sort compares adjacent descriptions and swaps them when out of order.
         for (int fin = ordenadas.size() - 1; fin > 0; fin--) {
             for (int i = 0; i < fin; i++) {
-                String actual = ordenadas.get(i).getDescripcion();
-                String siguiente = ordenadas.get(i + 1).getDescripcion();
+                String actual = descripcionParaOrdenar(ordenadas.get(i));
+                String siguiente = descripcionParaOrdenar(ordenadas.get(i + 1));
                 if (actual.compareToIgnoreCase(siguiente) > 0) {
                     Solicitud temporal = ordenadas.get(i);
                     ordenadas.set(i, ordenadas.get(i + 1));
@@ -152,6 +159,11 @@ public class GestorSolicitudes {
             }
         }
         return ordenadas;
+    }
+
+    private String descripcionParaOrdenar(Solicitud solicitud) {
+        String descripcion = solicitud.getDescripcion();
+        return descripcion == null ? "" : descripcion;
     }
 
     public Optional<Solicitud> obtenerSolicitudMasReciente() {

@@ -12,6 +12,8 @@ una lista, una cola y pilas.
 La conexión a MySQL se configura en `src/main/resources/application.properties`.
 Usa ahí el usuario y la contraseña de tu instalación. No compartas esa
 contraseña.
+El usuario y la contraseña también se pueden definir con las variables de
+entorno `DB_USER` y `DB_PASSWORD`. Si no se definen, se usan `root` y `root`.
 
 ## Ejecutar el proyecto
 
@@ -64,6 +66,8 @@ La ruta principal es `/api/solicitudes`.
 | Método | Ruta | Uso |
 | --- | --- | --- |
 | GET | `/api/solicitudes` | Ver todas las solicitudes |
+| GET | `/api/solicitudes/buscar?texto=xxx` | Buscar por texto en la descripción |
+| GET | `/api/solicitudes/ordenadas` | Ver solicitudes ordenadas por descripción |
 | GET | `/api/solicitudes/{id}` | Buscar una solicitud |
 | POST | `/api/solicitudes` | Registrar una solicitud |
 | GET | `/api/solicitudes/cola` | Ver la cola de solicitudes pendientes |

@@ -1,7 +1,9 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.UsuarioRequest;
+import com.example.demo.entity.Cliente;
 import com.example.demo.entity.Usuario;
+import com.example.demo.repository.SolicitudRepository;
 import com.example.demo.repository.UsuarioRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -17,9 +19,12 @@ import org.springframework.web.server.ResponseStatusException;
 public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
+    private final SolicitudRepository solicitudRepository;
 
-    public UsuarioController(UsuarioRepository usuarioRepository) {
+    public UsuarioController(UsuarioRepository usuarioRepository,
+                             SolicitudRepository solicitudRepository) {
         this.usuarioRepository = usuarioRepository;
+        this.solicitudRepository = solicitudRepository;
     }
 
     @GetMapping
@@ -75,6 +80,12 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         Usuario usuario = buscarUsuario(id);
+        // Evita que la clave foránea de Solicitud provoque un error al borrar el cliente.
+        if (usuario instanceof Cliente && solicitudRepository.existsByClienteId(id)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar un cliente que tiene solicitudes");
+        }
         usuarioRepository.delete(usuario);
     }
 

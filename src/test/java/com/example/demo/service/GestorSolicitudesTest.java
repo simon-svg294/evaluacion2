@@ -108,4 +108,33 @@ class GestorSolicitudesTest {
         assertEquals(List.of(zeta, alfa), List.copyOf(gestor.getColaSolicitudes()));
         assertEquals(List.of(zeta, alfa), gestor.getPilaSolicitudes());
     }
+
+    @Test
+    void ordenarPorDescripcionTrataLaDescripcionNulaComoTextoVacio() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud sinDescripcion = new Solicitud("Temporal");
+        Solicitud conDescripcion = new Solicitud("Solicitud");
+        gestor.registrarSolicitud(sinDescripcion);
+        gestor.registrarSolicitud(conDescripcion);
+        sinDescripcion.setDescripcion(null);
+
+        assertEquals(List.of(sinDescripcion, conDescripcion),
+                gestor.ordenarPorDescripcion());
+    }
+
+    @Test
+    void restaurarSolicitudLaDevuelvePendienteAlFrenteDeLaCola() {
+        GestorSolicitudes gestor = new GestorSolicitudes();
+        Solicitud primera = new Solicitud("Primera solicitud");
+        Solicitud segunda = new Solicitud("Segunda solicitud");
+        gestor.registrarSolicitud(primera);
+        gestor.registrarSolicitud(segunda);
+
+        assertSame(primera, gestor.procesarSiguienteSolicitud().orElseThrow());
+        gestor.restaurarSolicitudPendienteAlFrente(primera);
+
+        assertEquals(Solicitud.Estado.PENDIENTE, primera.getEstado());
+        assertEquals(List.of(primera, segunda),
+                List.copyOf(gestor.getColaSolicitudes()));
+    }
 }

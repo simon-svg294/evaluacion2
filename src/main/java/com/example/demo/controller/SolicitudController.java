@@ -45,6 +45,21 @@ public class SolicitudController {
         return solicitudRepository.findAll(pageable);
     }
 
+    @GetMapping("/buscar")
+    public List<Solicitud> buscarPorDescripcion(@RequestParam String texto) {
+        try {
+            return gestorSolicitudes.buscarPorDescripcion(texto);
+        } catch (IllegalArgumentException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, exception.getMessage(), exception);
+        }
+    }
+
+    @GetMapping("/ordenadas")
+    public List<Solicitud> ordenarPorDescripcion() {
+        return gestorSolicitudes.ordenarPorDescripcion();
+    }
+
     @GetMapping("/{id}")
     public Solicitud buscarPorId(@PathVariable Long id) {
         return solicitudRepository.findById(id)
@@ -89,8 +104,16 @@ public class SolicitudController {
     public Solicitud procesarSiguiente() {
         Solicitud solicitud = gestorSolicitudes.procesarSiguienteSolicitud()
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NO_CONTENT, "No hay solicitudes pendientes"));
-        return solicitudRepository.save(solicitud);
+                        HttpStatus.NOT_FOUND, "No hay solicitudes pendientes"));
+        try {
+            return solicitudRepository.save(solicitud);
+        } catch (RuntimeException exception) {
+            gestorSolicitudes.restaurarSolicitudPendienteAlFrente(solicitud);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "No se pudo guardar el estado de la solicitud; se devolvió a la cola",
+                    exception);
+        }
     }
 
     @PostMapping("/procesar-todas")
